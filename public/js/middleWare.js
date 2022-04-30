@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 const isURL = require("is-url");
-const https = require('https');
+const https = require('follow-redirects').https;
 const fs = require("fs");
 const trustedCa = [
     '/etc/ssl/certs/ca-certificates.crt'];
@@ -9,7 +9,7 @@ require('dotenv').config();
 module.exports = {
     checkJWT: (async (req, res, next) => {
         try {
-            if (req.headers.authorization != undefined && req.headers.authorization.startsWith("Bearer") && req.headers.authorization.split("")[1]) {
+            if (req.headers.authorization !== undefined && req.headers.authorization.startsWith("Bearer") && req.headers.authorization.split("")[1]) {
                 jwt.verify(req.headers.authorization.split('')[1], process.env.secret, (err, token) => {
                     if (err) {
                         res.status(400).send({
@@ -17,7 +17,7 @@ module.exports = {
                             message: "request failed",
                             "result": {"error": "server error"}
                         });
-                    } else if (token == undefined) {
+                    } else if (token === undefined) {
                         res.status(400).send({
                             success: false,
                             message: "request failed",
@@ -52,7 +52,7 @@ module.exports = {
             }
         })
     },
-    checkCertificate:(host)=>{
+    checkCertificate:(host, path)=>{
         return new Promise(async(resolve,reject)=>{
             try{
                 https.globalAgent.options.ca = [];
@@ -62,7 +62,7 @@ module.exports = {
                 options = {
                     host: host,
                     port: 443,
-                    path: '/',
+                    path: '/'+path,
                     method: 'GET',
                     rejectUnauthorized:true,
                 };
